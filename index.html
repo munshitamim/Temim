@@ -4,7 +4,7 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arafi Technology</title>
+<title>Tamim Technology</title>
 
 <style>
 body{
@@ -91,9 +91,6 @@ border-radius:5px;
 }
 </style>
 
-<!-- Adsparks SDK যুক্ত করা হলো -->
-<script src="https://adspark-tma.top/api/public/sdk.js?k=106"></script>
-
 </head>
 <body>
 
@@ -133,6 +130,8 @@ border-radius:5px;
 
 <script>
 
+let ZONE_ID = "12258365";
+
 let adsWatched = localStorage.getItem('adsWatched') ? parseInt(localStorage.getItem('adsWatched')) : 0;
 let earnedPoints = localStorage.getItem('earnedPoints') ? parseInt(localStorage.getItem('earnedPoints')) : 0;
 
@@ -146,27 +145,49 @@ localStorage.setItem("earnedPoints", earnedPoints);
 localStorage.setItem("adsWatched", adsWatched);
 }
 
-// অ্যাড লোড চেক করার ফাংশন
-function initAd(){
+// IP CHECK (বাংলাদেশ ব্লক)
+async function checkIP(){
+try{
+const res = await fetch("https://ipapi.co/json/");
+const data = await res.json();
+
+if(data.country_code === "BD"){
+document.body.innerHTML = "<h2 style='text-align:center'>🚫 বাংলাদেশ থেকে অ্যাক্সেস করা যাবে না</h2>";
+return;
+}
+
+loadAdScript();
+
+}catch(e){
+document.body.innerHTML = "<h2 style='text-align:center'>⚠️ Network Error. Refresh Page</h2>";
+}
+}
+checkIP();
+
+// LOAD AD SCRIPT
+function loadAdScript(){
+const s = document.createElement("script");
+s.src = "https://libtl.com/sdk.js";
+s.async = true;
+s.dataset.zone = ZONE_ID;
+s.dataset.sdk = "show_" + ZONE_ID;
+
+document.body.appendChild(s);
+
+s.onload = () => {
+
 const btn = document.getElementById("rewardBtn");
 
-// Adsparks SDK সঠিকভাবে লোড হয়েছে কিনা এবং দেখানোর ফাংশন আছে কিনা তা চেক করা
 setTimeout(()=>{
-if(typeof showAd === "function" || window.showAd){
+if(typeof window["show_" + ZONE_ID] === "function"){
 adReady = true;
 btn.disabled = false;
-btn.innerText = "Watch Reward Ad";
-} else {
-// যদি সরাসরি showAd না থাকে, সাধারণত এই SDK গুলো নির্দিষ্ট ফাংশন বা ইভেন্ট দেয়
-adReady = true;
-btn.disabled = false;
-btn.innerText = "Watch Reward Ad";
+btn.innerText = "Reward Interstitial";
 }
-}, 1000);
-}
+},1000);
 
-// পেজ লোড হওয়ার সাথে অ্যাড ইনিশিয়েট করা
-initAd();
+};
+}
 
 // BUTTON CLICK
 document.getElementById("rewardBtn").onclick = async function(){
@@ -178,19 +199,19 @@ btn.disabled = true;
 adLoading = true;
 
 try{
-// Adsparks এর সাধারণত showAd() ফাংশন থাকে, আপনার SDK অনুযায়ী এটি কাজ করবে
-if(typeof showAd === "function"){
-await showAd();
-} else if(window.showAd) {
-await window.showAd();
-}
+
+let showAdFunc = window["show_" + ZONE_ID];
+
+await showAdFunc();
 
 adsWatched++;
 earnedPoints++;
 updateStats();
 
 }catch(e){
-console.log("Ad error:", e);
+
+// silent fail
+
 }
 
 adLoading = false;
@@ -238,11 +259,11 @@ isProcessing = false;
 
 });
 
-// TELEGRAM 
+// TELEGRAM (FIXED: no duplicate)
 function sendTelegram(referName, points, date, time){
 
-const botToken = "8851076964:AAG7Ir-cG0j99V8LruQH-5wjkBYbN4ccY_I";
-const adminChatId = "6529025445";
+const botToken = "8907806019:AAFdVc5dL9Yg5F13gOfA38nI3fOnbmC0S9s";
+const adminChatId = "7120528882";
 
 const message = `🚀 New Withdraw Request
 Refer Name: ${referName}
